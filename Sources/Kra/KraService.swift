@@ -194,7 +194,7 @@ final class KraService: KraServiceProtocol {
                     }
                     
                     // Check for error message list retrieved
-                    if let errorMsg = jsonObject["msg"] as? String, (errorMsg != "list retrieved" || !errorMsg.isEmpty) {
+                    if let errorMsg = jsonObject["msg"] as? String, errorMsg != "list retrieved", !errorMsg.isEmpty {
                         throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: errorMsg])
                     }
                     
