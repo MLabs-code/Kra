@@ -42,9 +42,22 @@ public struct KraFilePathModel: Codable {
                 do {
                     let singleFile = try container.decode(KraFilePathData.self)
                     self = .single(singleFile)
-                } catch decodingError {
-                    // Ak ani to nefunguje, vrátime pôvodnú chybu
-                    throw error
+                } catch let error as DecodingError {
+                    // Spracovanie chyby dekódovania
+                    switch error {
+                    case .keyNotFound(let key, let context):
+                        print("Kľúč \(key.stringValue) nebol nájdený: \(context.debugDescription)")
+                    case .typeMismatch(let type, let context):
+                        print("Očakávaný typ \(type) sa nezhoduje: \(context.debugDescription)")
+                    case .valueNotFound(let type, let context):
+                        print("Hodnota typu \(type) nebola nájdená: \(context.debugDescription)")
+                    case .dataCorrupted(let context):
+                        print("Poškodené dáta: \(context.debugDescription)")
+                    @unknown default:
+                        print("Neznáma chyba dekódovania")
+                    }
+                } catch {
+                    print("Iná chyba: \(error)")
                 }
             }
         }
