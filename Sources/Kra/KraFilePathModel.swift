@@ -7,16 +7,16 @@
 
 import Foundation
 
-struct KraFilePathResponse: Codable {
+public struct KraFilePathResponse: Codable {
     let msg: String?
     let success: Int
     let data: DataContainer
 
-    enum DataContainer: Codable {
+    public enum DataContainer: Codable {
         case single(KraFilePathData)
         case list([FileInfo])
 
-        init(from decoder: Decoder) throws {
+        public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             // skúšame najprv objekt
             if let single = try? container.decode(KraFilePathData.self) {
@@ -27,7 +27,7 @@ struct KraFilePathResponse: Codable {
             }
         }
 
-        func encode(to encoder: Encoder) throws {
+        public func encode(to encoder: Encoder) throws {
             var container = encoder.singleValueContainer()
             switch self {
             case .single(let obj):
@@ -39,11 +39,11 @@ struct KraFilePathResponse: Codable {
     }
 }
 
-struct KraFilePathData: Codable {
+public struct KraFilePathData: Codable {
     let link: String
 }
 
-struct FileInfo: Codable {
+public struct FileInfo: Codable {
     let size: Int
     let name: String
     let shared: Bool
