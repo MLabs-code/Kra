@@ -189,7 +189,7 @@ final class KraService: KraServiceProtocol {
                 do {
                     // Manual JSON parsing since we need to extract array from a dictionary structure
                     guard let jsonObject = try JSONSerialization.jsonObject(with: response.data) as? [String: Any],
-                          let success = jsonObject["success"] as? Int, success == 1 else {
+                          let success = jsonObject["success"] as? Int, (success == 1 || success == 2011 || success == 201) else {
                         throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
                     }
                     
