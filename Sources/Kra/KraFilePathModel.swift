@@ -7,28 +7,27 @@
 
 import Foundation
 
-public struct KraFilePathModel: Codable {
+struct KraFilePathResponse: Codable {
     let msg: String?
-    let success: Int?
+    let success: Int
     let data: DataContainer
 
-    public enum DataContainer: Codable {
+    enum DataContainer: Codable {
         case single(KraFilePathData)
         case list([FileInfo])
 
-        public init(from decoder: Decoder) throws {
+        init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
-            // najprv skúsime dekódovať jediný objekt
+            // skúšame najprv objekt
             if let single = try? container.decode(KraFilePathData.self) {
                 self = .single(single)
             } else {
-                // ak to padne, dekódujeme pole
                 let list = try container.decode([FileInfo].self)
                 self = .list(list)
             }
         }
 
-        public func encode(to encoder: Encoder) throws {
+        func encode(to encoder: Encoder) throws {
             var container = encoder.singleValueContainer()
             switch self {
             case .single(let obj):
@@ -38,21 +37,13 @@ public struct KraFilePathModel: Codable {
             }
         }
     }
-
-    /// Ak sa to dekódovalo ako single, vráti URL; inak nil
-    public var urlLink: URL? {
-        switch data {
-        case .single(let d): return URL(string: d.link)
-        case .list:        return nil
-        }
-    }
 }
 
-public struct KraFilePathData: Codable {
+struct KraFilePathData: Codable {
     let link: String
 }
 
-public struct FileInfo: Codable {
+struct FileInfo: Codable {
     let size: Int
     let name: String
     let shared: Bool
