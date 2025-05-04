@@ -34,7 +34,7 @@ public class Kra {
     ///   - sessionId: The session ID obtained from login
     ///   - fileIdent: The file identifier
     ///   - completion: A closure that returns a Result with either file path info or an error
-    public func fileLink(sessionId: String, fileIdent: String, completion: @escaping (Result<KraFilePathModel, Error>) -> Void) {
+    public func fileLink(sessionId: String, fileIdent: String, completion: @escaping (Result<KraFilePathResponse, Error>) -> Void) {
         service.fileLink(sessionId: sessionId, fileIdent: fileIdent, completion: completion)
     }
     
@@ -43,7 +43,7 @@ public class Kra {
     ///   - sessionId: The session ID obtained from login
     ///   - folderIdent: Optional folder identifier. If nil, lists files in the root folder
     ///   - completion: A closure that returns a Result with either a list of files or an error
-    public func listFiles(sessionId: String, folderIdent: String?, completion: @escaping (Result<[KraFilePathModel], Error>) -> Void) {
+    public func listFiles(sessionId: String, folderIdent: String?, completion: @escaping (Result<KraFilePathResponse, Error>) -> Void) {
         service.listFiles(sessionId: sessionId, folderIdent: folderIdent, completion: completion)
     }
     
