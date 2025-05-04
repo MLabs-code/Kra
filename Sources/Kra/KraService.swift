@@ -186,33 +186,44 @@ final class KraService: KraServiceProtocol {
         provider.request(.listFiles(sessionId: sessionId, folderIdent: folderIdent)) { result in
             switch result {
             case .success(let response):
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase // ak používaš snake_case
+                
                 do {
-                    // Manual JSON parsing since we need to extract array from a dictionary structure
-                    guard let jsonObject = try JSONSerialization.jsonObject(with: response.data) as? [String: Any],
-                          let success = jsonObject["success"] as? Int, (success == 1 || success == 2011 || success == 201) else {
-                        throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
+                    let responseModel = try decoder.decode(KraFilePathResponse.self, from: response.data)
+                
+                    // Overenie success kódov
+                    guard responseModel.success == 1 ||
+                          responseModel.success == 2011 ||
+                          responseModel.success == 201 else {
+                        throw NSError(domain: "", code: responseModel.success,
+                                      userInfo: [NSLocalizedDescriptionKey: responseModel.msg ?? "Neznáma chyba"])
                     }
-                    
-                    // Check for error message list retrieved
-                    if let errorMsg = jsonObject["msg"] as? String, errorMsg != "list retrieved", !errorMsg.isEmpty {
-                        throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+                
+                    // Ak prišiel error‐msg
+                    if let msg = responseModel.msg,
+                       !msg.isEmpty,
+                       msg.lowercased() != "list retrieved" {
+                        throw NSError(domain: "", code: -1,
+                                      userInfo: [NSLocalizedDescriptionKey: msg])
                     }
-                    
-                    // Extract the array of file data
-                    guard let filesData = jsonObject["data"] as? [[String: Any]] else {
-                        throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing data array"])
+                
+                    // Vyber si, čo prišlo v data
+                    switch responseModel.data {
+                    case .single(let singleData):
+                        // napr. jednoriadkový súbor
+                        if let url = URL(string: singleData.link) {
+                            completion(.success([singleData]))  // alebo .single
+                        } else {
+                            throw NSError(domain: "", code: -1,
+                                          userInfo: [NSLocalizedDescriptionKey: "Neplatný link"])
+                        }
+                
+                    case .list(let files):
+                        completion(.success(files))
                     }
-                    
-                    // Convert each file dictionary into a KraFilePathModel
-                    var files: [KraFilePathModel] = []
-                    for fileDict in filesData {
-                        let fileData = try JSONSerialization.data(withJSONObject: fileDict)
-                        let fileModel = try JSONDecoder().decode(KraFilePathModel.self, from: fileData)
-                        files.append(fileModel)
-                    }
-                    
-                    completion(.success(files))
-                } catch {
+                }
+                catch {
                     completion(.failure(error))
                 }
             case .failure(let error):
