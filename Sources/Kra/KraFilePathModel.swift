@@ -19,6 +19,13 @@ public struct KraFilePathModel: Codable {
         return nil
     }
     
+    public var files: [FileInfo]? {
+        if case .list(let fileList) = data {
+            return fileList
+        }
+        return nil
+    }
+    
     public enum FileData: Codable {
         case single(KraFilePathData)
         case list([FileInfo])
@@ -26,22 +33,18 @@ public struct KraFilePathModel: Codable {
         public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             
-            // Skúsime dekódovať ako jednotlivý súbor
+            // Najprv skúsime dekódovať ako zoznam, pretože podľa vášho výpisu to vyzerá ako pole
             do {
-                let singleFile = try container.decode(KraFilePathData.self)
-                self = .single(singleFile)
-                return
+                let fileList = try container.decode([FileInfo].self)
+                self = .list(fileList)
             } catch {
-                // Ak to nefunguje, skúsime dekódovať ako zoznam
+                // Ak to nefunguje, skúsime dekódovať ako jednotlivý súbor
                 do {
-                    let fileList = try container.decode([FileInfo].self)
-                    self = .list(fileList)
-                    return
-                } catch {
-                    throw DecodingError.dataCorruptedError(
-                        in: container,
-                        debugDescription: "Data is neither a single file nor a file list"
-                    )
+                    let singleFile = try container.decode(KraFilePathData.self)
+                    self = .single(singleFile)
+                } catch decodingError {
+                    // Ak ani to nefunguje, vrátime pôvodnú chybu
+                    throw error
                 }
             }
         }
