@@ -181,7 +181,7 @@ final class KraService: KraServiceProtocol {
     
     func listFiles(sessionId: String,
                    folderIdent: String?,
-                   completion: @escaping (Result<[KraFilePathModel], Error>) -> Void)
+                   completion: @escaping (Result<KraFilePathResponse, Error>) -> Void)
     {
         provider.request(.listFiles(sessionId: sessionId, folderIdent: folderIdent)) { result in
             switch result {
