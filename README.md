@@ -11,8 +11,8 @@ Swift package for interacting with the KRA.sk cloud storage API.
 
 ## Requirements
 
-- iOS 12.0+ / macOS 10.13+
-- Swift 5.5+
+- iOS 15.0+ / tvOS 15 / macOS 12.00 / visonOS 1.0 / macCatalyst 15.0+
+- Swift 5.9+
 
 ## Installation
 
