@@ -16,7 +16,7 @@ public struct KraFilePathModel: Codable {
         case single(KraFilePathData)
         case list([FileInfo])
 
-        init(from decoder: Decoder) throws {
+        public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             // najprv skúsime dekódovať jediný objekt
             if let single = try? container.decode(KraFilePathData.self) {
@@ -28,7 +28,7 @@ public struct KraFilePathModel: Codable {
             }
         }
 
-        func encode(to encoder: Encoder) throws {
+        public func encode(to encoder: Encoder) throws {
             var container = encoder.singleValueContainer()
             switch self {
             case .single(let obj):
