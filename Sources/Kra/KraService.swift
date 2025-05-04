@@ -14,8 +14,8 @@ import Combine
 public protocol KraServiceProtocol {
     func login(username: String, password: String, completion: @escaping (Result<String, Error>) -> Void)
     func getUserInfo(sessionId: String, completion: @escaping (Result<KraUserInfoModel, Error>) -> Void)
-    func fileLink(sessionId: String, fileIdent: String, completion: @escaping (Result<KraFilePathResponse, Error>) -> Void)
-    func listFiles(sessionId: String, folderIdent: String?, completion: @escaping (Result<KraFilePathResponse, Error>) -> Void)
+    func fileLink(sessionId: String, fileIdent: String, completion: @escaping (Result<KraFilePathModel, Error>) -> Void)
+    func listFiles(sessionId: String, folderIdent: String?, completion: @escaping (Result<KraFilesModel, Error>) -> Void)
     func logout(_ token: String, _ completion: @escaping (Result<Bool, Error>) -> Void)
     
     #if canImport(Combine) && compiler(>=5.1)
@@ -130,7 +130,7 @@ final class KraService: KraServiceProtocol {
     
     @available(macOS 10.15, iOS 13.0, *)
     func fileLinkAsync(sessionId: String,
-                       fileIdent: String) async throws -> KraFilePathResponse {
+                       fileIdent: String) async throws -> KraFilePathModel {
         return try await withCheckedThrowingContinuation { continuation in
             fileLink(sessionId: sessionId,
                      fileIdent: fileIdent) { result in
@@ -146,13 +146,13 @@ final class KraService: KraServiceProtocol {
     
     func fileLink(sessionId: String,
                   fileIdent: String,
-                  completion: @escaping (Result<KraFilePathResponse, Error>) -> Void) {
+                  completion: @escaping (Result<KraFilePathModel, Error>) -> Void) {
         
         provider.request(.downloadFile(sessionId: sessionId, fileIdent: fileIdent)) { result in
             switch result {
             case .success(let response):
                 do {
-                    let fileResponse = try JSONDecoder().decode(KraFilePathResponse.self, from: response.data)
+                    let fileResponse = try JSONDecoder().decode(KraFilePathModel.self, from: response.data)
                     completion(.success(fileResponse))
                 } catch {
                     completion(.failure(error))
@@ -165,7 +165,7 @@ final class KraService: KraServiceProtocol {
     
     @available(macOS 10.15, iOS 13.0, *)
     func listFilesAsync(sessionId: String,
-                        folderIdent: String?) async throws -> KraFilePathResponse
+                        folderIdent: String?) async throws -> KraFilesModel
     {
         return try await withCheckedThrowingContinuation { continuation in
             listFiles(sessionId: sessionId, folderIdent: folderIdent) { result in
@@ -181,49 +181,23 @@ final class KraService: KraServiceProtocol {
     
     func listFiles(sessionId: String,
                    folderIdent: String?,
-                   completion: @escaping (Result<KraFilePathResponse, Error>) -> Void)
+                   completion: @escaping (Result<KraFilesModel, Error>) -> Void)
     {
         provider.request(.listFiles(sessionId: sessionId, folderIdent: folderIdent)) { result in
             switch result {
             case .success(let response):
-                let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase // ak používaš snake_case
-                
                 do {
-                    let responseModel = try decoder.decode(KraFilePathResponse.self, from: response.data)
-                
-                    // Overenie success kódov
-                    guard responseModel.success == 1 ||
-                          responseModel.success == 2011 ||
-                          responseModel.success == 201 else {
-                        throw NSError(domain: "", code: responseModel.success,
-                                      userInfo: [NSLocalizedDescriptionKey: responseModel.msg ?? "Neznáma chyba"])
+                    let file = try JSONDecoder().decode(KraFilesModel.self, from: response.data)
+                    if response.statusCode == 401 {
+                        self.onLoginNeeded?()
+                        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unauthorized, auto relogin, try again!"])))
+                    } else if let errorMsg = file.msg {
+                        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: errorMsg])))
+                    } else {
+                        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown error"])))
                     }
-                
-                    // Ak prišiel error‐msg
-                    if let msg = responseModel.msg,
-                       !msg.isEmpty,
-                       msg.lowercased() != "list retrieved" {
-                        throw NSError(domain: "", code: -1,
-                                      userInfo: [NSLocalizedDescriptionKey: msg])
-                    }
-                
-                    // Vyber si, čo prišlo v data
-                    switch responseModel.data {
-                    case .single(let singleData):
-                        // napr. jednoriadkový súbor
-                        if let url = URL(string: singleData.link) {
-                            completion(.success([singleData]))  // alebo .single
-                        } else {
-                            throw NSError(domain: "", code: -1,
-                                          userInfo: [NSLocalizedDescriptionKey: "Neplatný link"])
-                        }
-                
-                    case .list(let files):
-                        completion(.success(files))
-                    }
-                }
-                catch {
+                    completion(.success(file))
+                } catch {
                     completion(.failure(error))
                 }
             case .failure(let error):
