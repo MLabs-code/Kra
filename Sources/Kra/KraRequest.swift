@@ -7,6 +7,11 @@
 
 
 import Foundation
+#if os(iOS) || os(tvOS) || os(visionOS)
+import UIKit
+#elseif os(watchOS)
+import WatchKit
+#endif
 
 // MARK: - Provider Factory
 class KraProviderFactory {
@@ -151,17 +156,49 @@ extension KraRequest: TargetType, Cacheable {
     }
     
     var headers: [String : String]? {
+        // Vytvorím základné hlavičky podľa typu požiadavky
+        var baseHeaders: [String: String]
+        
         switch self {
         case .uploadFile:
-            return [
+            baseHeaders = [
                 "Tus-Resumable": "1.0.0",
                 "Content-Type": "application/offset+octet-stream"
             ]
         default:
-            return [
+            baseHeaders = [
                 "Content-Type": "application/json"
             ]
         }
+        
+        // Pridám User-Agent hlavičku s informáciami o platforme
+        baseHeaders["User-Agent"] = KraRequest.platformUserAgent
+        
+        return baseHeaders
+    }
+    
+    static var platformUserAgent: String {
+        #if os(iOS)
+        let osName = "ios"
+        let version = UIDevice.current.systemVersion
+        #elseif os(tvOS)
+        let osName = "tvos"
+        let version = UIDevice.current.systemVersion
+        #elseif os(macOS)
+        let osName = "macos"
+        let version = ProcessInfo.processInfo.operatingSystemVersionString
+        #elseif os(watchOS)
+        let osName = "watchos"
+        let version = WKInterfaceDevice.current().systemVersion
+        #elseif os(visionOS)
+        let osName = "visionos" 
+        let version = UIDevice.current.systemVersion
+        #else
+        let osName = "unknownAPPLE"
+        let version = "0.0"
+        #endif
+        
+        return "\(osName)/\(version)"
     }
     
     var sampleData: Data {
