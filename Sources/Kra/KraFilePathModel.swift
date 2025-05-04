@@ -8,31 +8,31 @@
 import Foundation
 
 public struct KraFilePathModel: Codable {
-    let msg: String?
-    let data: KraFilePathData?
-    let success: Int
+    public let msg: String?
+    public let data: KraFilePathData?
+    public let success: Int
     
-    var urlLink: URL? {
+    public var urlLink: URL? {
         URL(string: data?.link ?? "")
     }
 }
 
 public struct KraFilePathData: Codable {
-    let link: String
+    public let link: String
 }
 
 public struct KraFilesModel: Codable {
-    let msg: String?
-    let success: Int
-    let data: [KraFile]
+    public let msg: String?
+    public let success: Int
+    public let data: [KraFile]
 }
 
 public struct KraFile: Codable {
-    let size: Int
-    let name: String
-    let shared: Bool
-    let ident: String
-    let folder: Bool
-    let created: String
-    let password: Bool
+    public let size: Int
+    public let name: String
+    public let shared: Bool
+    public let ident: String
+    public let folder: Bool
+    public let created: String
+    public let password: Bool
 }
