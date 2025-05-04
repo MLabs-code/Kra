@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct KraFilePathModel: Codable {
+public struct KraFilePathModel: Codable {
     let msg: String?
     let success: Int?
     let data: DataContainer
 
-    enum DataContainer: Codable {
+    public enum DataContainer: Codable {
         case single(KraFilePathData)
         case list([FileInfo])
 
@@ -48,11 +48,11 @@ struct KraFilePathModel: Codable {
     }
 }
 
-struct KraFilePathData: Codable {
+public struct KraFilePathData: Codable {
     let link: String
 }
 
-struct FileInfo: Codable {
+public struct FileInfo: Codable {
     let size: Int
     let name: String
     let shared: Bool
