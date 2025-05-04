@@ -14,8 +14,8 @@ import Combine
 public protocol KraServiceProtocol {
     func login(username: String, password: String, completion: @escaping (Result<String, Error>) -> Void)
     func getUserInfo(sessionId: String, completion: @escaping (Result<KraUserInfoModel, Error>) -> Void)
-    func fileLink(sessionId: String, fileIdent: String, completion: @escaping (Result<KraFilePathModel, Error>) -> Void)
-    func listFiles(sessionId: String, folderIdent: String?, completion: @escaping (Result<[KraFilePathModel], Error>) -> Void)
+    func fileLink(sessionId: String, fileIdent: String, completion: @escaping (Result<KraFilePathResponse, Error>) -> Void)
+    func listFiles(sessionId: String, folderIdent: String?, completion: @escaping (Result<KraFilePathResponse, Error>) -> Void)
     func logout(_ token: String, _ completion: @escaping (Result<Bool, Error>) -> Void)
     
     #if canImport(Combine) && compiler(>=5.1)
@@ -130,7 +130,7 @@ final class KraService: KraServiceProtocol {
     
     @available(macOS 10.15, iOS 13.0, *)
     func fileLinkAsync(sessionId: String,
-                       fileIdent: String) async throws -> KraFilePathModel {
+                       fileIdent: String) async throws -> KraFilePathResponse {
         return try await withCheckedThrowingContinuation { continuation in
             fileLink(sessionId: sessionId,
                      fileIdent: fileIdent) { result in
@@ -146,13 +146,13 @@ final class KraService: KraServiceProtocol {
     
     func fileLink(sessionId: String,
                   fileIdent: String,
-                  completion: @escaping (Result<KraFilePathModel, Error>) -> Void) {
+                  completion: @escaping (Result<KraFilePathResponse, Error>) -> Void) {
         
         provider.request(.downloadFile(sessionId: sessionId, fileIdent: fileIdent)) { result in
             switch result {
             case .success(let response):
                 do {
-                    let fileResponse = try JSONDecoder().decode(KraFilePathModel.self, from: response.data)
+                    let fileResponse = try JSONDecoder().decode(KraFilePathResponse.self, from: response.data)
                     completion(.success(fileResponse))
                 } catch {
                     completion(.failure(error))
@@ -165,7 +165,7 @@ final class KraService: KraServiceProtocol {
     
     @available(macOS 10.15, iOS 13.0, *)
     func listFilesAsync(sessionId: String,
-                        folderIdent: String?) async throws -> [KraFilePathModel]
+                        folderIdent: String?) async throws -> KraFilePathResponse
     {
         return try await withCheckedThrowingContinuation { continuation in
             listFiles(sessionId: sessionId, folderIdent: folderIdent) { result in
