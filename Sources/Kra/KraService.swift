@@ -188,15 +188,16 @@ final class KraService: KraServiceProtocol {
             case .success(let response):
                 do {
                     let file = try JSONDecoder().decode(KraFilesModel.self, from: response.data)
-                    if response.statusCode == 401 {
+                    if response.statusCode == 200 {
+                        completion(.success(file))
+                    } else if response.statusCode == 401 {
                         self.onLoginNeeded?()
                         completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unauthorized, auto relogin, try again!"])))
                     } else if let errorMsg = file.msg {
                         completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: errorMsg])))
                     } else {
-                        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown error"])))
+                        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown error code: \(response.statusCode)"])))
                     }
-                    completion(.success(file))
                 } catch {
                     completion(.failure(error))
                 }
